@@ -147,6 +147,7 @@ public class StoreOrderController {
     @RequestMapping(value = "/take", method = RequestMethod.POST)
     public CommonResult<Boolean> take(@RequestParam(value = "id") Integer id) {
         if(orderService.take(id)) {
+            log.info("6.17：订单收货接口成功！完成收货，可能先进行设置冻结期再完成期");
             return CommonResult.success();
         }else{
             return CommonResult.failed();

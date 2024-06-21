@@ -30,6 +30,8 @@ import com.zbkj.common.model.user.User;
 import com.zbkj.common.model.user.UserToken;
 import com.zbkj.service.dao.StorePinkDao;
 import com.zbkj.service.service.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -54,6 +56,8 @@ import java.util.stream.Collectors;
  */
 @Service
 public class StorePinkServiceImpl extends ServiceImpl<StorePinkDao, StorePink> implements StorePinkService {
+    private static final Logger logger = LoggerFactory.getLogger(WechatNewServiceImpl.class);
+
 
     @Resource
     private StorePinkDao dao;
@@ -288,10 +292,13 @@ public class StorePinkServiceImpl extends ServiceImpl<StorePinkDao, StorePink> i
      * @param user 拼团用户
      */
     private void pushMessageOrder(MyRecord record, User user, SystemNotification notification) {
-        if (!record.getStr("payType").equals(Constants.PAY_TYPE_WE_CHAT)) {
-            return ;
-        }
-        if (record.getInt("isChannel").equals(2)) {
+        logger.info("6.18：拼团订阅消息");
+
+        // TODO: 2024/6/18 下方必须小程序中微信支付的订单才发通知，余额支付的订单不可以发通知，测试时先注释
+//        if (!record.getStr("payType").equals(Constants.PAY_TYPE_WE_CHAT)) {
+//            return ;
+//        }
+        if (record.getInt("isChannel").equals(2)) { //h5
             return ;
         }
 
@@ -316,12 +323,8 @@ public class StorePinkServiceImpl extends ServiceImpl<StorePinkDao, StorePink> i
                 return ;
             }
             // 组装数据
-//        temMap.put("character_string1",  record.getStr("orderNo"));
-//        temMap.put("thing2", record.getStr("proName"));
-//        temMap.put("thing5", "恭喜您拼团成功！我们将尽快为您发货。");
-            temMap.put("character_string10",  record.getStr("orderNo"));
-            temMap.put("thing7", record.getStr("proName"));
-            temMap.put("thing9", "恭喜您拼团成功！我们将尽快为您发货。");
+            temMap.put("character_string6",  record.getStr("orderNo"));
+            temMap.put("thing4", "恭喜您拼团成功！我们将尽快为您发货。");
             templateMessageService.pushMiniTemplateMessage(notification.getRoutineId(), temMap, userToken.getToken());
         }
     }

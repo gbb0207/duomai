@@ -186,19 +186,24 @@ public class OrderTaskServiceImpl implements OrderTaskService {
             //如果10秒钟拿不到一个数据，那么退出循环
             Object data = redisUtil.getRightPop(redisKey, 10L);
             if (ObjectUtil.isNull(data)) {
+                logger.info("6.16：redis 没有数据，key：" + redisKey);
                 continue;
             }
             try {
+                logger.info("6.16：进入 try");
                 StoreOrder storeOrder = storeOrderService.getByOderId(String.valueOf(data));
                 if (ObjectUtil.isNull(storeOrder)) {
                     logger.error("OrderTaskServiceImpl.orderPaySuccessAfter | 订单不存在，orderNo: " + data);
-                    throw new CrmebException("订单不存在，orderNo: " + data);
+                    throw new CrmebException("6.16：订单不存在，orderNo: " + data);
                 }
                 boolean result = orderPayService.paySuccess(storeOrder);
+                logger.info("6.16：订单支付成功！完成支付后操作：" + result);
                 if (!result) {
+                    logger.info("6.16：支付失败！左插入数据，key：" + redisKey + "，data：" + data);
                     redisUtil.lPush(redisKey, data);
                 }
             } catch (Exception e) {
+                logger.info("6.16：进入 catch，出现异常");
                 e.printStackTrace();
                 redisUtil.lPush(redisKey, data);
             }
@@ -244,8 +249,11 @@ public class OrderTaskServiceImpl implements OrderTaskService {
      */
     @Override
     public void orderReceiving() {
+        // 6.17：订单收货在 OrderServiceImpl.take 中设置的 redis key
         String redisKey = TaskConstants.ORDER_TASK_REDIS_KEY_AFTER_TAKE_BY_USER;
         Long size = redisUtil.getListSize(redisKey);
+        // 6.17：此处判断是否收货，下方 size 为 1，就是有一个已收货的订单，下方会将此订单的积分和佣金进行冻结期
+        // 6.17：OrderTaskServiceImpl.orderReceiving | size:1 代表有一个已收货订单，可以进入冻结期
         logger.info("OrderTaskServiceImpl.orderReceiving | size:" + size);
         if (size < 1) {
             return;

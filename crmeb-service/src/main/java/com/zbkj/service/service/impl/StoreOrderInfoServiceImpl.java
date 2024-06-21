@@ -191,5 +191,18 @@ public class StoreOrderInfoServiceImpl extends ServiceImpl<StoreOrderInfoDao, St
         lambdaQueryWrapper.eq(StoreOrderInfo::getUnique, uni);
         return dao.selectOne(lambdaQueryWrapper);
     }
+
+    /**
+     * 根据订单号获取商品名称
+     * @param orderNo 订单号
+     * @return 商品名称
+     */
+    @Override
+    public String getProductNameByOrderNo(String orderNo) {
+        LambdaQueryWrapper<StoreOrderInfo> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(StoreOrderInfo::getOrderNo, orderNo);
+        StoreOrderInfo storeOrderInfo = dao.selectOne(lambdaQueryWrapper);
+        return storeOrderInfo.getProductName();
+    }
 }
 

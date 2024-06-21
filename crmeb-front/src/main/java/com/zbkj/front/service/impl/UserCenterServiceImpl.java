@@ -45,15 +45,15 @@ import java.util.stream.Collectors;
 
 /**
  * 用户中心 服务实现类
- *  +----------------------------------------------------------------------
- *  | CRMEB [ CRMEB赋能开发者，助力企业发展 ]
- *  +----------------------------------------------------------------------
- *  | Copyright (c) 2016~2022 https://www.crmeb.com All rights reserved.
- *  +----------------------------------------------------------------------
- *  | Licensed CRMEB并不是自由软件，未经许可不能去掉CRMEB相关版权
- *  +----------------------------------------------------------------------
- *  | Author: CRMEB Team <admin@crmeb.com>
- *  +----------------------------------------------------------------------
+ * +----------------------------------------------------------------------
+ * | CRMEB [ CRMEB赋能开发者，助力企业发展 ]
+ * +----------------------------------------------------------------------
+ * | Copyright (c) 2016~2022 https://www.crmeb.com All rights reserved.
+ * +----------------------------------------------------------------------
+ * | Licensed CRMEB并不是自由软件，未经许可不能去掉CRMEB相关版权
+ * +----------------------------------------------------------------------
+ * | Author: CRMEB Team <admin@crmeb.com>
+ * +----------------------------------------------------------------------
  */
 @Service
 public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements UserCenterService {
@@ -141,6 +141,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 推广佣金/提现总和
+     *
      * @return BigDecimal
      */
     @Override
@@ -155,7 +156,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
         //累计提现
         if (type == 4) {
-            return userExtractService.getWithdrawn(null,null);
+            return userExtractService.getWithdrawn(null, null);
         }
 
         return BigDecimal.ZERO;
@@ -163,6 +164,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 提现申请
+     *
      * @return Boolean
      */
     @Override
@@ -170,7 +172,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
         switch (request.getExtractType()) {
             case "weixin":
                 if (StringUtils.isBlank(request.getWechat())) {
-                    throw new  CrmebException("请填写微信号！");
+                    throw new CrmebException("请填写微信号！");
                 }
                 request.setAlipayCode(null);
                 request.setBankCode(null);
@@ -178,7 +180,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
                 break;
             case "alipay":
                 if (StringUtils.isBlank(request.getAlipayCode())) {
-                    throw new  CrmebException("请填写支付宝账号！");
+                    throw new CrmebException("请填写支付宝账号！");
                 }
                 request.setWechat(null);
                 request.setBankCode(null);
@@ -186,22 +188,23 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
                 break;
             case "bank":
                 if (StringUtils.isBlank(request.getBankName())) {
-                    throw new  CrmebException("请填写银行名称！");
+                    throw new CrmebException("请填写银行名称！");
                 }
                 if (StringUtils.isBlank(request.getBankCode())) {
-                    throw new  CrmebException("请填写银行卡号！");
+                    throw new CrmebException("请填写银行卡号！");
                 }
                 request.setWechat(null);
                 request.setAlipayCode(null);
                 break;
             default:
-                throw new  CrmebException("请选择支付方式");
+                throw new CrmebException("请选择支付方式");
         }
         return userExtractService.extractApply(request);
     }
 
     /**
      * 提现银行/提现最低金额
+     *
      * @return UserExtractCashResponse
      */
     @Override
@@ -211,7 +214,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
         List<String> bankArr = new ArrayList<>();
         if (bank.indexOf("\n") > 0) {
             bankArr.addAll(Arrays.asList(bank.split("\n")));
-        }else{
+        } else {
             bankArr.add(bank);
         }
         return bankArr;
@@ -219,6 +222,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 会员等级列表
+     *
      * @return List<UserLevel>
      */
     @Override
@@ -228,6 +232,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 推广用户， 我自己推广了哪些用户
+     *
      * @return List<UserSpreadPeopleItemResponse>
      */
     @Override
@@ -259,6 +264,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 充值额度选择
+     *
      * @return UserRechargeResponse
      */
     @Override
@@ -276,6 +282,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 用户资金统计
+     *
      * @return UserBalanceResponse
      */
     @Override
@@ -289,6 +296,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 推广订单
+     *
      * @return UserSpreadOrderResponse;
      */
     @Override
@@ -348,7 +356,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
         // 获取月份总订单数
         Map<String, Integer> countMap = userBrokerageRecordService.getSpreadCountByUidAndMonth(user.getUid(), monthList);
-        for (UserSpreadOrderItemResponse userSpreadOrderItemResponse: userSpreadOrderItemResponseList) {
+        for (UserSpreadOrderItemResponse userSpreadOrderItemResponse : userSpreadOrderItemResponseList) {
             userSpreadOrderItemResponse.setCount(countMap.get(userSpreadOrderItemResponse.getTime()));
         }
 
@@ -358,6 +366,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 充值
+     *
      * @return UserSpreadOrderResponse;
      */
     @Override
@@ -420,6 +429,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 微信登录
+     *
      * @return LoginResponse;
      */
     @Override
@@ -427,7 +437,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
         // 通过code获取获取公众号授权信息
         WeChatOauthToken oauthToken = wechatNewService.getOauth2AccessToken(code);
         //检测是否存在
-        UserToken userToken = userTokenService.getByOpenidAndType(oauthToken.getOpenId(),  Constants.THIRD_LOGIN_TOKEN_TYPE_PUBLIC);
+        UserToken userToken = userTokenService.getByOpenidAndType(oauthToken.getOpenId(), Constants.THIRD_LOGIN_TOKEN_TYPE_PUBLIC);
         LoginResponse loginResponse = new LoginResponse();
         if (ObjectUtil.isNotNull(userToken)) {// 已存在，正常登录
             User user = userService.getById(userToken.getUid());
@@ -482,6 +492,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 获取微信授权logo
+     *
      * @return String;
      */
     @Override
@@ -491,7 +502,8 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 小程序登录
-     * @param code String 前端临时授权code
+     *
+     * @param code    String 前端临时授权code
      * @param request RegisterThirdUserRequest 用户信息
      * @return LoginResponse
      */
@@ -556,7 +568,8 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 推广人排行榜
-     * @param type  String 时间范围(week-周，month-月)
+     *
+     * @param type             String 时间范围(week-周，month-月)
      * @param pageParamRequest PageParamRequest 分页
      * @return List<LoginResponse>
      */
@@ -567,7 +580,8 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 佣金排行榜
-     * @param type  String 时间范围
+     *
+     * @param type             String 时间范围
      * @param pageParamRequest PageParamRequest 分页
      * @return List<User>
      */
@@ -579,7 +593,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
             return null;
         }
         // 解决0元排行问题
-        for (int i = 0; i < recordList.size();) {
+        for (int i = 0; i < recordList.size(); ) {
             UserBrokerageRecord userBrokerageRecord = recordList.get(i);
             if (userBrokerageRecord.getPrice().compareTo(BigDecimal.ZERO) < 1) {
                 recordList.remove(i);
@@ -597,7 +611,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
         //解决排序问题
         List<User> userList = CollUtil.newArrayList();
-        for (UserBrokerageRecord record: recordList) {
+        for (UserBrokerageRecord record : recordList) {
             User user = new User();
             User userVo = userVoList.get(record.getUid());
 
@@ -606,7 +620,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
             user.setBrokeragePrice(record.getPrice());
             if (StrUtil.isBlank(userVo.getNickname())) {
                 user.setNickname(userVo.getPhone().substring(0, 2) + "****" + userVo.getPhone().substring(7));
-            }else{
+            } else {
                 user.setNickname(userVo.getNickname());
             }
             userList.add(user);
@@ -616,6 +630,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 推广海报图
+     *
      * @return List<SystemGroupData>
      */
     @Override
@@ -625,7 +640,8 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 当前用户在佣金排行第几名
-     * @param type  String 时间范围
+     *
+     * @param type String 时间范围
      * @return 优惠券集合
      */
     @Override
@@ -643,7 +659,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
         for (int i = 0; i < recordList.size(); i++) {
             if (recordList.get(i).getUid().equals(userId)) {
                 number = i + 1;
-                break ;
+                break;
             }
         }
         return number;
@@ -651,6 +667,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 佣金转入余额
+     *
      * @return Boolean
      */
     @Override
@@ -717,6 +734,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 推广佣金明细
+     *
      * @param pageParamRequest 分页参数
      */
     @Override
@@ -727,6 +745,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 用户账单记录（现金）
+     *
      * @param type 记录类型：all-全部，expenditure-支出，income-收入
      * @return CommonPage
      */
@@ -765,6 +784,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 微信注册绑定手机号
+     *
      * @param request 请求参数
      * @return 登录信息
      */
@@ -855,6 +875,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 用户积分记录列表
+     *
      * @param pageParamRequest 分页参数
      * @return List<UserIntegralRecord>
      */
@@ -866,6 +887,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 获取用户积分信息
+     *
      * @return IntegralUserResponse
      */
     @Override
@@ -887,6 +909,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 获取用户经验记录
+     *
      * @param pageParamRequest 分页参数
      * @return List<UserExperienceRecord>
      */
@@ -898,6 +921,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 提现用户信息
+     *
      * @return UserExtractCashResponse
      */
     @Override
@@ -916,6 +940,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 推广人列表统计
+     *
      * @return UserSpreadPeopleResponse
      */
     @Override
@@ -1002,6 +1027,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 赠送新人券
+     *
      * @param uid 用户uid
      */
     private void giveNewPeopleCoupon(Integer uid) {
@@ -1051,8 +1077,9 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
 
     /**
      * 检测手机验证码
+     *
      * @param phone 手机号
-     * @param code 验证码
+     * @param code  验证码
      */
     private void checkValidateCode(String phone, String code) {
         Object validateCode = redisUtil.get(SmsConstants.SMS_VALIDATE_PHONE + phone);

@@ -264,6 +264,7 @@ public class OrderServiceImpl implements OrderService {
         boolean result = storeOrderService.updateById(storeOrder);
         if (result) {
             //后续操作放入redis
+            // 6.17：com.zbkj.service.service.impl.OrderTaskServiceImpl.orderReceiving 用到这个 key
             redisUtil.lPush(TaskConstants.ORDER_TASK_REDIS_KEY_AFTER_TAKE_BY_USER, id);
         }
         return result;
@@ -427,6 +428,8 @@ public class OrderServiceImpl implements OrderService {
                 orderInfoResponse.setImage(e.getImage());
                 orderInfoResponse.setCartNum(e.getPayNum());
                 orderInfoResponse.setPrice(ObjectUtil.isNotNull(e.getVipPrice()) ? e.getVipPrice() : e.getPrice());
+                //添加sku
+                orderInfoResponse.setSku(e.getSku());
                 orderInfoResponse.setProductId(e.getProductId());
                 infoResponseList.add(orderInfoResponse);
             });
@@ -787,6 +790,8 @@ public class OrderServiceImpl implements OrderService {
             orderInfoResponse.setCartNum(e.getInfo().getPayNum());
             orderInfoResponse.setPrice(e.getInfo().getPrice());
             orderInfoResponse.setProductId(e.getProductId());
+            //添加sku
+            orderInfoResponse.setSku(e.getInfo().getSku());
             infoResponseList.add(orderInfoResponse);
         });
         response.setOrderInfoList(infoResponseList);

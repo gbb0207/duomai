@@ -439,8 +439,10 @@ public class WechatNewServiceImpl implements WechatNewService {
         String accessToken = getMiniAccessToken();
         String url = StrUtil.format(WeChatConstants.WECHAT_MINI_SEND_SUBSCRIBE_URL, accessToken);
         JSONObject messAge = JSONObject.parseObject(JSONObject.toJSONString(templateMessage));
+        logger.info("6.18：订阅消息发送，给微信发送的信息：" + messAge);
         String result = restTemplateUtil.postJsonData(url, messAge);
         JSONObject data = JSONObject.parseObject(result);
+        logger.info("6.18：订阅消息发送，微信返回消息：" + data);
         if (ObjectUtil.isNull(data)) {
             throw new CrmebException("微信平台接口异常，没任何数据返回！");
         }

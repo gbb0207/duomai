@@ -109,6 +109,7 @@ public class TemplateMessageServiceImpl extends ServiceImpl<TemplateMessageDao, 
             try{
                 TemplateMessageVo templateMessage = JSONObject.toJavaObject(JSONObject.parseObject(data.toString()), TemplateMessageVo.class);
                 boolean result = wechatNewService.sendMiniSubscribeMessage(templateMessage);
+                logger.info("6.18：小程序订阅消息发送成功！");
                 if(!result){
                     redisUtil.lPush(redisKey, data);
                 }

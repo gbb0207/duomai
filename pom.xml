@@ -9,12 +9,12 @@
         <module>crmeb-admin</module>
         <module>crmeb-front</module>
     </modules>
-    <!--<parent>
+    <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.2.6.RELEASE</version>
-        <relativePath/> &lt;!&ndash; lookup parent from repository &ndash;&gt;
-    </parent>-->
+        <!--<relativePath/> &lt;!&ndash; lookup parent from repository &ndash;&gt;-->
+    </parent>
     <groupId>com.zbkj</groupId>
     <artifactId>crmeb</artifactId>
     <version>0.0.1-SNAPSHOT</version>
@@ -33,13 +33,13 @@
     <!-- 依赖声明 -->
     <dependencyManagement>
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-dependencies</artifactId>
-            <version>2.2.6.RELEASE</version>
-            <type>pom</type>
-            <scope>import</scope>
-        </dependency>
+        <!--<dependency>-->
+        <!--    <groupId>org.springframework.boot</groupId>-->
+        <!--    <artifactId>spring-boot-dependencies</artifactId>-->
+        <!--    <version>2.2.6.RELEASE</version>-->
+        <!--    <type>pom</type>-->
+        <!--    <scope>import</scope>-->
+        <!--</dependency>-->
 
         <!-- https://mvnrepository.com/artifact/com.alibaba/fastjson -->
         <dependency>

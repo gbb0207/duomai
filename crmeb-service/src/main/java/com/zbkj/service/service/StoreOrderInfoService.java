@@ -71,4 +71,11 @@ public interface StoreOrderInfoService extends IService<StoreOrderInfo> {
      * @return BigDecimal
      */
     BigDecimal getSalesByDateAndProductId(String date, Integer proId);
+
+    /**
+     * 根据订单号获取商品名
+     * @param orderNo 订单号
+     * @return 商品名称
+     */
+    String getProductNameByOrderNo(String orderNo);
 }

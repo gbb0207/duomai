@@ -219,7 +219,7 @@ public class UserServiceImpl extends ServiceImpl<UserDao, User> implements UserS
     }
 
     /**
-     * 操作积分、余额
+     * 操作积分、余额，这是后台管理系统上的操作积分
      */
     @Override
     public Boolean updateIntegralMoney(UserOperateIntegralMoneyRequest request) {
@@ -878,14 +878,19 @@ public class UserServiceImpl extends ServiceImpl<UserDao, User> implements UserS
     public Boolean operationIntegral(Integer uid, Integer integral, Integer nowIntegral, String type) {
         UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
         if (type.equals("add")) {
+            // 6.17：sql 中的 integral 是表中的旧积分，后面的 integral 参数为传来的新增积分
             updateWrapper.setSql(StrUtil.format("integral = integral + {}", integral));
         } else {
             updateWrapper.setSql(StrUtil.format("integral = integral - {}", integral));
             updateWrapper.last(StrUtil.format(" and (integral - {} >= 0)", integral));
         }
         updateWrapper.eq("uid", uid);
+        // 6.17：此处的列保存的一定是执行加减后的积分，与后端计算的积分比较是否有差错，避免数据库的错误导致插入异常
         updateWrapper.eq("integral", nowIntegral);
-        return update(updateWrapper);
+        // 6.17：查看是否成功修改积分
+        boolean update = update(updateWrapper);
+        logger.info("6.17：修改用户积分，是否成功修改：" + update);
+        return update;
     }
 
     /**

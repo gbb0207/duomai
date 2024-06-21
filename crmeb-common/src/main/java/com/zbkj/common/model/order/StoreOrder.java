@@ -149,11 +149,11 @@ public class StoreOrder implements Serializable {
 
     private Integer isMerCheck;
 
-    @ApiModelProperty(value = "拼团商品id0一般商品")
-    private Integer combinationId;
-
     @ApiModelProperty(value = "拼团id 0没有拼团")
     private Integer pinkId;
+
+    @ApiModelProperty(value = "拼团商品id0一般商品")
+    private Integer combinationId;
 
     @ApiModelProperty(value = "成本价")
     private BigDecimal cost;

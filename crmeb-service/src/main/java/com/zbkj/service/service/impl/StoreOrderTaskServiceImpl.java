@@ -433,12 +433,14 @@ public class StoreOrderTaskServiceImpl implements StoreOrderTaskService {
         // 获取佣金记录
         List<UserBrokerageRecord> recordList = userBrokerageRecordService.findListByLinkIdAndLinkType(storeOrder.getOrderId(), BrokerageRecordConstants.BROKERAGE_RECORD_LINK_TYPE_ORDER);
         logger.info("收货处理佣金条数：" + recordList.size());
+        // 6.17：处理每个收货后的订单（是否是收货状态在调用此方法的服务中，点击1个用法），如果是创建期，那么进入冻结期
         for (UserBrokerageRecord record : recordList) {
             if (!record.getStatus().equals(BrokerageRecordConstants.BROKERAGE_RECORD_STATUS_CREATE)) {
                 throw new CrmebException(StrUtil.format("订单收货task处理，订单佣金记录不是创建状态，id={}", orderId));
             }
             // 佣金进入冻结期
             record.setStatus(BrokerageRecordConstants.BROKERAGE_RECORD_STATUS_FROZEN);
+            logger.info("6.17：佣金冻结期");
             // 计算解冻时间
             Long thawTime = cn.hutool.core.date.DateUtil.current(false);
             if (record.getFrozenTime() > 0) {
@@ -449,6 +451,9 @@ public class StoreOrderTaskServiceImpl implements StoreOrderTaskService {
         }
 
         // 获取积分记录
+        // 6.17：这里有时候积分记录是0条，下方检查传入的参数
+        logger.info("6.17：收货后处理 storeOrder.getOrderId()：" + storeOrder.getOrderId());
+        logger.info("6.17：收货后处理 storeOrder.getUid()：" +  storeOrder.getUid());
         List<UserIntegralRecord> integralRecordList = userIntegralRecordService.findListByOrderIdAndUid(storeOrder.getOrderId(), storeOrder.getUid());
         logger.info("收货处理积分条数：" + integralRecordList.size());
         List<UserIntegralRecord> userIntegralRecordList = integralRecordList.stream().filter(e -> e.getType().equals(IntegralRecordConstants.INTEGRAL_RECORD_TYPE_ADD)).collect(Collectors.toList());
@@ -456,9 +461,11 @@ public class StoreOrderTaskServiceImpl implements StoreOrderTaskService {
             if (!record.getStatus().equals(IntegralRecordConstants.INTEGRAL_RECORD_STATUS_CREATE)) {
                 throw new CrmebException(StrUtil.format("订单收货task处理，订单积分记录不是创建状态，id={}", orderId));
             }
-            // 佣金进入冻结期
+            // 积分进入冻结期
             record.setStatus(IntegralRecordConstants.INTEGRAL_RECORD_STATUS_FROZEN);
+            logger.info("6.17：积分冻结期");
             // 计算解冻时间
+            // 6.17：false 毫秒，true 秒，获取当前时间戳
             Long thawTime = cn.hutool.core.date.DateUtil.current(false);
             if (record.getFrozenTime() > 0) {
                 DateTime dateTime = cn.hutool.core.date.DateUtil.offsetDay(new Date(), record.getFrozenTime());
@@ -510,10 +517,13 @@ public class StoreOrderTaskServiceImpl implements StoreOrderTaskService {
      * 小程序订阅消息
      */
     private void pushMessageOrder(StoreOrder storeOrder, User user) {
+        logger.info("6.18：收货订阅消息");
+
         SystemNotification notification = systemNotificationService.getByMark(NotifyConstants.RECEIPT_GOODS_MARK);
         if (storeOrder.getIsChannel().equals(2)) {
             return;
         }
+        // TODO: 2024/6/21 下方必须小程序中微信支付的订单才发通知，余额支付的订单不可以发通知，测试时先注释，此处取消注释
         if (!storeOrder.getPayType().equals(Constants.PAY_TYPE_WE_CHAT)) {
             return;
         }
@@ -553,9 +563,11 @@ public class StoreOrderTaskServiceImpl implements StoreOrderTaskService {
 //        temMap.put("time7", DateUtil.nowDateTimeStr());
 //        temMap.put("thing1", storeNameAndCarNumString);
 //        temMap.put("thing5", "您购买的商品已确认收货！");
-            temMap.put("character_string6", storeOrder.getOrderId());
-            temMap.put("date5", DateUtil.nowDateTimeStr());
-            temMap.put("thing2", storeNameAndCarNumString);
+//            temMap.put("character_string6", storeOrder.getOrderId());
+//            temMap.put("date5", DateUtil.nowDateTimeStr());
+//            temMap.put("thing2", storeNameAndCarNumString);
+            temMap.put("character_string1", storeOrder.getOrderId());
+            temMap.put("thing9", "您购买的商品已确认收货！");
             templateMessageService.pushMiniTemplateMessage(notification.getRoutineId(), temMap, userToken.getToken());
         }
     }

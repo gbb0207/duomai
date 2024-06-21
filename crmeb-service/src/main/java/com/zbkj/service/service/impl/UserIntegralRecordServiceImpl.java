@@ -74,12 +74,14 @@ public class UserIntegralRecordServiceImpl extends ServiceImpl<UserIntegralRecor
         lqw.eq(UserIntegralRecord::getLinkId, orderNo);
         lqw.in(UserIntegralRecord::getStatus, IntegralRecordConstants.INTEGRAL_RECORD_STATUS_CREATE, IntegralRecordConstants.INTEGRAL_RECORD_STATUS_FROZEN, IntegralRecordConstants.INTEGRAL_RECORD_STATUS_COMPLETE);
         List<UserIntegralRecord> recordList = dao.selectList(lqw);
+        logger.info("6.17：收货后处理，是否查询到积分记录表中有传入参数的记录：" + recordList);
         if (CollUtil.isEmpty(recordList)) {
             return recordList;
         }
         for (int i = 0; i < recordList.size();) {
             UserIntegralRecord record = recordList.get(i);
             if (record.getType().equals(IntegralRecordConstants.INTEGRAL_RECORD_TYPE_ADD)) {
+                // 6.17：完成状态的订单不予返回，只返回创建期和冻结期的订单
                 if (record.getStatus().equals(IntegralRecordConstants.INTEGRAL_RECORD_STATUS_COMPLETE)) {
                     recordList.remove(i);
                     continue;
@@ -96,7 +98,9 @@ public class UserIntegralRecordServiceImpl extends ServiceImpl<UserIntegralRecor
     @Override
     public void integralThaw() {
         // 查询需要解冻的积分
+        // 6.17：状态处于2即FROZEN的才会被查询到列表（见下方方法体），查询到状态2的订单才会被解冻
         List<UserIntegralRecord> thawList = findThawList();
+        logger.info("6.17：定时任务，积分解冻记录：" + thawList);
         if (CollUtil.isEmpty(thawList)) {
             return;
         }
@@ -106,7 +110,9 @@ public class UserIntegralRecordServiceImpl extends ServiceImpl<UserIntegralRecor
             if (ObjectUtil.isNull(user)) {
                 continue ;
             }
+            logger.info("6.17：积分完成期，下方设置为3");
             record.setStatus(IntegralRecordConstants.INTEGRAL_RECORD_STATUS_COMPLETE);
+//            logger.info("6.17：积分完成期");
             // 计算积分余额
             Integer balance = user.getIntegral() + record.getIntegral();
             record.setBalance(balance);
@@ -254,6 +260,7 @@ public class UserIntegralRecordServiceImpl extends ServiceImpl<UserIntegralRecor
         lqw.le(UserIntegralRecord::getThawTime, System.currentTimeMillis());
         lqw.eq(UserIntegralRecord::getLinkType, IntegralRecordConstants.INTEGRAL_RECORD_LINK_TYPE_ORDER);
         lqw.eq(UserIntegralRecord::getType, IntegralRecordConstants.INTEGRAL_RECORD_TYPE_ADD);
+        // 6.17：订单状态在2即冻结期的才会被查询到
         lqw.eq(UserIntegralRecord::getStatus, IntegralRecordConstants.INTEGRAL_RECORD_STATUS_FROZEN);
         return dao.selectList(lqw);
     }

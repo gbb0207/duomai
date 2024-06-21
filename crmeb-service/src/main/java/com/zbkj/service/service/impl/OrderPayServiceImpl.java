@@ -199,7 +199,8 @@ public class OrderPayServiceImpl implements OrderPayService {
             BigDecimal integralBig = new BigDecimal(integralStr);
             integral = integralBig.multiply(storeOrder.getPayPrice()).setScale(0, BigDecimal.ROUND_DOWN).intValue();
             if (integral > 0) {
-                // 生成积分记录
+                // integralRecordInit 中生成积分记录，修改积分状态为 1 即创建期
+                // 6.17：这里是订单支付服务，支付成功后下方 integralRecordInit 会将订单状态设置为 1 即 创建期
                 UserIntegralRecord integralRecord = integralRecordInit(storeOrder, user.getIntegral(), integral, "order");
                 integralList.add(integralRecord);
             }
@@ -228,9 +229,10 @@ public class OrderPayServiceImpl implements OrderPayService {
         /**
          * 计算佣金，生成佣金记录
          */
+        // 6.17：下方方法会将佣金记录的状态设置为1，创建期
         List<UserBrokerageRecord> recordList = assignCommission(storeOrder);
 
-        // 分销员逻辑
+        // 分销员逻辑，不是分销员才执行下面，开启分销功能=》达到消费门槛=》成为分销员
         if (!user.getIsPromoter()) {
             String funcStatus = systemConfigService.getValueByKey(SysConfigConstants.CONFIG_KEY_BROKERAGE_FUNC_STATUS);
             if ("1".equals(funcStatus)) {
@@ -246,17 +248,26 @@ public class OrderPayServiceImpl implements OrderPayService {
             //订单日志
             storeOrderStatusService.createLog(storeOrder.getId(), Constants.ORDER_LOG_PAY_SUCCESS, Constants.ORDER_LOG_MESSAGE_PAY_SUCCESS);
 
+            //6.16：日志信息
+            Boolean logInfo;
+
             // 用户信息变更
-            userService.updateById(user);
+            logInfo = userService.updateById(user);
+            logger.info("6.16：用户信息变更：" + logInfo);
+            logger.info("6.16：用户信息：" + user);
 
             //资金变动
-            userBillService.saveBatch(billList);
+            logInfo = userBillService.saveBatch(billList);
+            logger.info("6.16：资金变动：" + logInfo);
+            logger.info("6.16：资金：" + billList);
 
             // 积分记录
-            userIntegralRecordService.saveBatch(integralList);
+            logInfo = userIntegralRecordService.saveBatch(integralList);
+            logger.info("6.16：积分记录：" + logInfo);
+            logger.info("6.16：积分：" + integralList);
 
             // 经验记录
-            userExperienceRecordService.save(experienceRecord);
+            logInfo = userExperienceRecordService.save(experienceRecord);
 
             //经验升级
             userLevelService.upLevel(user);
@@ -267,6 +278,8 @@ public class OrderPayServiceImpl implements OrderPayService {
                     temp.setLinkId(storeOrder.getOrderId());
                 });
                 userBrokerageRecordService.saveBatch(recordList);
+                logger.info("6.16：佣金记录：" + logInfo);
+                logger.info("6.16：佣金：" + recordList);
             }
 
             // 如果是拼团订单进行拼团后置处理
@@ -299,7 +312,11 @@ public class OrderPayServiceImpl implements OrderPayService {
                     }
                 }
 
+                // 6.18：下方 getIsWechat 公众号，getIsRoutine 小程序
+                logger.info("6.18：payNotification.getIsWechat()：" + payNotification.getIsWechat());
+                logger.info("6.18：payNotification.getIsRoutine()：" + payNotification.getIsRoutine());
                 if (payNotification.getIsWechat().equals(1) || payNotification.getIsRoutine().equals(1)) {
+                    logger.info("6.18：下方即将进入发送模板通知");
                     //下发模板通知
                     pushMessageOrder(storeOrder, user, payNotification);
                 }
@@ -308,6 +325,8 @@ public class OrderPayServiceImpl implements OrderPayService {
                 autoSendCoupons(storeOrder);
 
                 // 根据配置 打印小票
+                // 6.16 易联云异常，未开启打印
+                // TODO: 2024/6/18 易联云未开启会报异常
                 ylyPrintService.YlyPrint(storeOrder.getOrderId(),true);
 
             } catch (Exception e) {
@@ -417,12 +436,13 @@ public class OrderPayServiceImpl implements OrderPayService {
             return CollUtil.newArrayList();
         }
         // 营销产品不参与
+        // 6.16：拼团、秒杀、砍价没有分佣
         if(storeOrder.getCombinationId() > 0 || storeOrder.getSeckillId() > 0 || storeOrder.getBargainId() > 0){
             return CollUtil.newArrayList();
         }
         // 查找订单所属人信息
         User user = userService.getById(storeOrder.getUid());
-        // 当前用户不存在 没有上级 或者 当用用户上级时自己  直接返回
+        // 当前用户不存在 没有上级 或者 当用用户上级是自己  直接返回
         if(null == user.getSpreadUid() || user.getSpreadUid() < 1 || user.getSpreadUid().equals(storeOrder.getUid())){
             return CollUtil.newArrayList();
         }
@@ -444,6 +464,7 @@ public class OrderPayServiceImpl implements OrderPayService {
             brokerageRecord.setTitle(BrokerageRecordConstants.BROKERAGE_RECORD_TITLE_ORDER);
             brokerageRecord.setPrice(brokerage);
             brokerageRecord.setMark(StrUtil.format("获得推广佣金，分佣{}", brokerage));
+            // 6.17：佣金创建期
             brokerageRecord.setStatus(BrokerageRecordConstants.BROKERAGE_RECORD_STATUS_CREATE);
             brokerageRecord.setFrozenTime(Integer.valueOf(Optional.ofNullable(fronzenTime).orElse("0")));
             brokerageRecord.setCreateTime(DateUtil.nowDateTime());
@@ -934,6 +955,7 @@ public class OrderPayServiceImpl implements OrderPayService {
             integralRecord.setMark(StrUtil.format("用户付款成功,商品增加{}积分", integral));
         }
         integralRecord.setStatus(IntegralRecordConstants.INTEGRAL_RECORD_STATUS_CREATE);
+        logger.info("6.17：积分创建期");
         // 获取积分冻结期
         String fronzenTime = systemConfigService.getValueByKey(Constants.CONFIG_KEY_STORE_INTEGRAL_EXTRACT_TIME);
         integralRecord.setFrozenTime(Integer.valueOf(Optional.ofNullable(fronzenTime).orElse("0")));
@@ -948,14 +970,24 @@ public class OrderPayServiceImpl implements OrderPayService {
      * 小程序订阅消息
      */
     private void pushMessageOrder(StoreOrder storeOrder, User user, SystemNotification payNotification) {
+        logger.info("6.18：支付成功通知");
+        logger.info("6.18：通知里，是否成功进入发送模板通知");
+        // 6.18：小程序实际支付成功后下方没有打印日志，如果下方日志均打印则说明可以进到第二个if
+        logger.info("6.18：通知里，支付渠道 storeOrder.getIsChannel()，1为小程序中微信支付，3为余额支付：" + storeOrder.getIsChannel());
+        logger.info("6.18：通知里，支付类型 storeOrder.getPayType()：" + storeOrder.getPayType());
+        logger.info("6.18：通知里，小程序订阅信息 payNotification.getIsRoutine()，1即开启：" + payNotification.getIsRoutine());
+
         if (storeOrder.getIsChannel().equals(2)) {// H5
             return;
         }
         UserToken userToken;
         HashMap<String, String> temMap = new HashMap<>();
+
+        // TODO: 2024/6/18 为了余额支付测试订阅消息通知，下方先注释掉“支付类型必须是微信支付”。已取消注释
         if (!storeOrder.getPayType().equals(Constants.PAY_TYPE_WE_CHAT)) {
             return;
         }
+
         // 公众号
         if (storeOrder.getIsChannel().equals(Constants.ORDER_PAY_CHANNEL_PUBLIC) && payNotification.getIsWechat().equals(1)) {
             userToken = userTokenService.getTokenByUserId(user.getUid(), UserConstants.USER_TOKEN_TYPE_WECHAT);
@@ -970,19 +1002,22 @@ public class OrderPayServiceImpl implements OrderPayService {
             templateMessageService.pushTemplateMessage(payNotification.getWechatId(), temMap, userToken.getToken());
             return;
         }
+
         if (storeOrder.getIsChannel().equals(Constants.ORDER_PAY_CHANNEL_PROGRAM) && payNotification.getIsRoutine().equals(1)) {
+        // TODO: 2024/6/18 这里 isChannel 支付渠道必须小程序中微信支付才会发送订阅消息，下方测试时改为余额支付发送消息。已取消注释
+//        if (storeOrder.getIsChannel().equals(Constants.ORDER_PAY_CHANNEL_YUE) && payNotification.getIsRoutine().equals(1)) {
             // 小程序发送订阅消息
             userToken = userTokenService.getTokenByUserId(user.getUid(), UserConstants.USER_TOKEN_TYPE_ROUTINE);
+            logger.info("6.18：支付成功，小程序向用户发送订阅消息：" + user.getUid());
             if (ObjectUtil.isNull(userToken)) {
                 return ;
             }
             // 组装数据
-//            temMap.put("character_string1", storeOrder.getOrderId());
-//            temMap.put("amount2", storeOrder.getPayPrice().toString() + "元");
-//            temMap.put("thing7", "您的订单已支付成功");
-            temMap.put("character_string3", storeOrder.getOrderId());
-            temMap.put("amount9", storeOrder.getPayPrice().toString() + "元");
-            temMap.put("thing6", "您的订单已支付成功");
+            temMap.put("name1", user.getNickname()); //用户姓名
+//            temMap.put("thing6", storeOrderInfoService.getProductNameByOrderNo(storeOrder.getOrderId())); //订单商品
+            temMap.put("character_string2", storeOrder.getOrderId());   //订单号
+            temMap.put("amount3", storeOrder.getPayPrice().toString() + "元");   //订单金额
+//            temMap.put("data4", cn.hutool.core.date.DateUtil.format(storeOrder.getPayTime(), "yyyy年MM月dd日"));   //下单时间
             templateMessageService.pushMiniTemplateMessage(payNotification.getRoutineId(), temMap, userToken.getToken());
         }
     }

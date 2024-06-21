@@ -35,7 +35,10 @@ import com.zbkj.common.vo.*;
 import com.zbkj.service.dao.StoreOrderDao;
 import com.zbkj.service.delete.OrderUtils;
 import com.zbkj.service.service.*;
+import lombok.extern.log4j.Log4j;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -60,6 +63,7 @@ import java.util.stream.Collectors;
  */
 @Service
 public class StoreOrderServiceImpl extends ServiceImpl<StoreOrderDao, StoreOrder> implements StoreOrderService {
+    private static final Logger logger = LoggerFactory.getLogger(WechatNewServiceImpl.class);
 
     @Resource
     private StoreOrderDao dao;
@@ -1515,9 +1519,13 @@ public class StoreOrderServiceImpl extends ServiceImpl<StoreOrderDao, StoreOrder
      * 小程序订阅消息
      */
     private void pushMessageOrder(StoreOrder storeOrder, User user, SystemNotification notification) {
+        logger.info("6.18：发货订阅信息");
+
         if (storeOrder.getIsChannel().equals(2)) {
             return;
         }
+
+        // TODO: 2024/6/18 下方必须小程序中微信支付的订单才发通知，余额支付的订单不可以发通知，测试时先注释，此处取消注释
         if (!storeOrder.getPayType().equals(Constants.PAY_TYPE_WE_CHAT)) {
             return;
         }
@@ -1546,16 +1554,10 @@ public class StoreOrderServiceImpl extends ServiceImpl<StoreOrderDao, StoreOrder
                 return ;
             }
             // 组装数据
-            // 注释部分为丰享汇小程序
-//        temMap.put("character_string1", storeOrder.getOrderId());
-//        temMap.put("name3", storeOrder.getDeliveryName());
-//        temMap.put("character_string4", storeOrder.getDeliveryId());
-//        temMap.put("thing7", "您的订单已发货");
-            // 放开部分为一码秦川小程序
-            temMap.put("character_string1", storeOrder.getOrderId());
-            temMap.put("name6", storeOrder.getDeliveryName());
-            temMap.put("character_string7", storeOrder.getDeliveryId());
-            temMap.put("thing11", "您的订单已发货");
+            temMap.put("character_string3", storeOrder.getDeliveryId());   //快递单号
+            temMap.put("thing14", storeOrder.getDeliveryName());    //快递公司
+            temMap.put("character_string7", storeOrder.getOrderId());  //订单号
+            temMap.put("thing8", storeOrder.getUserAddress());  //收货地址
             templateMessageService.pushMiniTemplateMessage(notification.getRoutineId(), temMap, userToken.getToken());
         }
     }
@@ -1686,9 +1688,12 @@ public class StoreOrderServiceImpl extends ServiceImpl<StoreOrderDao, StoreOrder
      * 小程序订阅消息
      */
     private void pushMessageDeliveryOrder(StoreOrder storeOrder, User user, StoreOrderSendRequest request, List<String> productNameList) {
+        logger.info("6.18：配送订阅消息");
+
         if (storeOrder.getIsChannel().equals(2)) {
             return;
         }
+        // TODO: 2024/6/18 下方必须小程序中微信支付的订单才发通知，余额支付的订单不可以发通知，测试时先注释，此处取消注释
         if (!storeOrder.getPayType().equals(Constants.PAY_TYPE_WE_CHAT)) {
             return;
         }
@@ -1724,14 +1729,11 @@ public class StoreOrderServiceImpl extends ServiceImpl<StoreOrderDao, StoreOrder
             if (proName.length() > 20) {
                 proName = proName.substring(0, 15) + "***";
             }
-//        map.put("thing8", proName);
-//        map.put("character_string1", storeOrder.getOrderId());
-//        map.put("name4", request.getDeliveryName());
-//        map.put("phone_number10", request.getDeliveryTel());
-            map.put("thing8", proName);
-            map.put("character_string1", storeOrder.getOrderId());
-            map.put("name4", request.getDeliveryName());
-            map.put("phone_number10", request.getDeliveryTel());
+            map.put("character_string1", request.getOrderNo()); //订单编号
+            map.put("character_string5", request.getExpressNumber()); //快递单号
+            map.put("thing4", request.getExpressName());    //快递公司名
+            map.put("thing7", request.getDeliveryName());   //配送员名称
+            map.put("phone_number8", request.getDeliveryTel()); //配送员电话
             templateMessageService.pushMiniTemplateMessage(notification.getRoutineId(), map, userToken.getToken());
         }
     }
