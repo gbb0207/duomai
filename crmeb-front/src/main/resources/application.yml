@@ -1,7 +1,8 @@
 # CRMEB 相关配置
 crmeb:
   version: CRMEB-JAVA-KY-v1.3.4 # 当前代码版本
-  imagePath: D://XYF//Desktop//CRMEB//CRMEB_java//crmeb//crmebimage//
+#  imagePath: D://XYF//Desktop//CRMEB//CRMEB_java//crmeb//crmebimage//
+  imagePath: /www/wwwroot/duomai/image/
 
 # 配置端口
 server:
@@ -18,6 +19,7 @@ spring:
     #  配置的环境
     #    active: #spring.profiles.active#
     active: dev
+#    active: prod
   servlet:
     multipart:
       max-file-size: 50MB #设置单个文件大小

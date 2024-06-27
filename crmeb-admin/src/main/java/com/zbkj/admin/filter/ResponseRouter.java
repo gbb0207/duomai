@@ -33,7 +33,7 @@ public class ResponseRouter {
             data = SpringUtil.getBean(SystemAttachmentService.class).prefixImage(data);
         }
 
-//        if (data.contains("file/")) { 附件也走crmebimage 目录下
+//        if (data.contains("file/")) { // 附件也走crmebimage 目录下
 //            data = SpringUtil.getBean(SystemAttachmentService.class).prefixFile(data);
 //        }
 

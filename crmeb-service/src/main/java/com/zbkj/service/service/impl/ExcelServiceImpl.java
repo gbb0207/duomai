@@ -1,6 +1,10 @@
 package com.zbkj.service.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.qcloud.cos.COSClient;
+import com.qcloud.cos.ClientConfig;
+import com.qcloud.cos.auth.BasicCOSCredentials;
+import com.qcloud.cos.auth.COSCredentials;
 import com.zbkj.common.config.CrmebConfig;
 import com.zbkj.common.page.CommonPage;
 import com.zbkj.common.constants.Constants;
@@ -14,35 +18,41 @@ import com.zbkj.common.utils.DateUtil;
 import com.zbkj.common.utils.ExportUtil;
 import com.zbkj.common.response.StoreBargainResponse;
 import com.zbkj.common.response.StoreCombinationResponse;
-import com.zbkj.common.vo.BargainProductExcelVo;
-import com.zbkj.common.vo.CombinationProductExcelVo;
-import com.zbkj.common.vo.OrderExcelVo;
-import com.zbkj.common.vo.ProductExcelVo;
+import com.zbkj.common.utils.UploadUtil;
+import com.zbkj.common.vo.*;
 import com.zbkj.service.service.*;
+import com.zbkj.service.util.FileToMultipartFileConverterUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
-*  ExcelServiceImpl 接口实现
-*  +----------------------------------------------------------------------
- *  | CRMEB [ CRMEB赋能开发者，助力企业发展 ]
- *  +----------------------------------------------------------------------
- *  | Copyright (c) 2016~2022 https://www.crmeb.com All rights reserved.
- *  +----------------------------------------------------------------------
- *  | Licensed CRMEB并不是自由软件，未经许可不能去掉CRMEB相关版权
- *  +----------------------------------------------------------------------
- *  | Author: CRMEB Team <admin@crmeb.com>
- *  +----------------------------------------------------------------------
-*/
+ * ExcelServiceImpl 接口实现
+ * +----------------------------------------------------------------------
+ * | CRMEB [ CRMEB赋能开发者，助力企业发展 ]
+ * +----------------------------------------------------------------------
+ * | Copyright (c) 2016~2022 https://www.crmeb.com All rights reserved.
+ * +----------------------------------------------------------------------
+ * | Licensed CRMEB并不是自由软件，未经许可不能去掉CRMEB相关版权
+ * +----------------------------------------------------------------------
+ * | Author: CRMEB Team <admin@crmeb.com>
+ * +----------------------------------------------------------------------
+ */
 @Service
 public class ExcelServiceImpl implements ExcelService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CosServiceImpl.class);
 
     @Autowired
     private StoreProductService storeProductService;
@@ -65,8 +75,12 @@ public class ExcelServiceImpl implements ExcelService {
     @Autowired
     private CrmebConfig crmebConfig;
 
+    @Autowired
+    private CosService cosService;
+
     /**
      * 导出砍价商品
+     *
      * @param request 请求参数
      * @return 导出地址
      */
@@ -114,6 +128,7 @@ public class ExcelServiceImpl implements ExcelService {
 
     /**
      * 导出拼团商品
+     *
      * @param request 请求参数
      * @return 导出地址
      */
@@ -158,6 +173,7 @@ public class ExcelServiceImpl implements ExcelService {
 
     /**
      * 商品导出
+     *
      * @param request 请求参数
      * @return 导出地址
      */
@@ -168,7 +184,7 @@ public class ExcelServiceImpl implements ExcelService {
         pageParamRequest.setLimit(Constants.EXPORT_MAX_LIMIT);
         PageInfo<StoreProductResponse> storeProductResponsePageInfo = storeProductService.getAdminList(request, pageParamRequest);
         List<StoreProductResponse> list = storeProductResponsePageInfo.getList();
-        if(list.size() < 1){
+        if (list.size() < 1) {
             throw new CrmebException("没有可导出的数据！");
         }
 
@@ -176,13 +192,13 @@ public class ExcelServiceImpl implements ExcelService {
         List<String> cateIdListStr = list.stream().map(StoreProductResponse::getCateId).distinct().collect(Collectors.toList());
 
         HashMap<Integer, String> categoryNameList = new HashMap<Integer, String>();
-        if(cateIdListStr.size() > 0){
+        if (cateIdListStr.size() > 0) {
             String join = StringUtils.join(cateIdListStr, ",");
             List<Integer> cateIdList = CrmebUtil.stringToArray(join);
             categoryNameList = categoryService.getListInId(cateIdList);
         }
         List<ProductExcelVo> voList = CollUtil.newArrayList();
-        for (StoreProductResponse product : list ) {
+        for (StoreProductResponse product : list) {
             ProductExcelVo vo = new ProductExcelVo();
             vo.setStoreName(product.getStoreName());
             vo.setStoreInfo(product.getStoreInfo());
@@ -221,7 +237,7 @@ public class ExcelServiceImpl implements ExcelService {
     /**
      * 订单导出
      *
-     * @param request  查询条件
+     * @param request 查询条件
      * @return 文件名称
      */
     @Override
@@ -231,21 +247,24 @@ public class ExcelServiceImpl implements ExcelService {
         pageParamRequest.setLimit(Constants.EXPORT_MAX_LIMIT);
         CommonPage<StoreOrderDetailResponse> adminList = storeOrderService.getAdminList(request, pageParamRequest);
         List<StoreOrderDetailResponse> list = adminList.getList();
-        if(list.size() < 1){
+        if (list.size() < 1) {
             throw new CrmebException("没有可导出的数据！");
         }
 
         List<OrderExcelVo> voList = CollUtil.newArrayList();
-        for (StoreOrderDetailResponse order: list ) {
+        for (StoreOrderDetailResponse order : list) {
             OrderExcelVo vo = new OrderExcelVo();
             vo.setCreateTime(DateUtil.dateToStr(order.getCreateTime(), "yyyy-MM-dd HH:mm:ss"));
             vo.setOrderId(order.getOrderId());
             vo.setOrderType(order.getOrderType());
             vo.setPayPrice(order.getPayPrice().toString());
             vo.setPayTypeStr(order.getPayTypeStr());
-            vo.setProductName(order.getProductList().stream().map(item-> item.getInfo().getProductName()).collect(Collectors.joining(",")));
+            vo.setProductName(order.getProductList().stream().map(item -> item.getInfo().getProductName()).collect(Collectors.joining(",")));
             vo.setRealName(order.getRealName());
             vo.setStatusStr(order.getStatusStr().get("value"));
+            // 6.27：新加字段
+            vo.setUserPhone(order.getUserPhone());
+            vo.setUserAddress(order.getUserAddress());
             voList.add(vo);
         }
 
@@ -285,9 +304,30 @@ public class ExcelServiceImpl implements ExcelService {
 //        aliasMap.put("paid", "支付状态");
 //        aliasMap.put("type", "订单类型:0-普通订单，1-视频号订单");
 //        aliasMap.put("isAlterPrice", "是否改价,0-否，1-是");
+        // 6.27：新增字段
+        aliasMap.put("userPhone", "用户电话");
+        aliasMap.put("userAddress", "用户地址");
 
-        return ExportUtil.exportExecl(fileName, "订单导出", voList, aliasMap);
+        String newFileName = ExportUtil.exportExecl(fileName, "订单导出", voList, aliasMap);
 
+        // TODO 6.25：Excel上云
+        logger.info("6.25：Excel上云");
+        CloudVo cloudVo = new CloudVo();
+        String pre = "tx";
+        cloudVo.setDomain(systemConfigService.getValueByKeyException(pre + "UploadUrl"));
+        cloudVo.setAccessKey(systemConfigService.getValueByKeyException(pre + "AccessKey"));
+        cloudVo.setSecretKey(systemConfigService.getValueByKeyException(pre + "SecretKey"));
+        cloudVo.setBucketName(systemConfigService.getValueByKeyException(pre + "StorageName"));
+        cloudVo.setRegion(systemConfigService.getValueByKeyException(pre + "StorageRegion"));
+        String webPathTx = crmebConfig.getImagePath();
+
+        File file = new File(webPathTx + newFileName);
+
+        COSCredentials cred = new BasicCOSCredentials(cloudVo.getAccessKey(), cloudVo.getSecretKey());
+        ClientConfig clientConfig = new ClientConfig(new com.qcloud.cos.region.Region(cloudVo.getRegion()));
+        COSClient cosClient = new COSClient(cred, clientConfig);
+        cosService.uploadFile(cloudVo, UploadUtil.getWebPath() + fileName, webPathTx + newFileName, file, cosClient);
+
+        return newFileName;
     }
 }
-

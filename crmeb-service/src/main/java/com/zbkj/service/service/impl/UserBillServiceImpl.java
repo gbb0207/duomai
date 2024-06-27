@@ -197,7 +197,8 @@ public class UserBillServiceImpl extends ServiceImpl<UserBillDao, UserBill> impl
         userBill.setLinkId(request.getOrderId().toString());
         userBill.setBalance(user.getNowMoney().add(request.getAmount()));
         userBill.setMark("订单退款到余额" + request.getAmount() + "元");
-        userBill.setPm(1);
+        // TODO: 2024/6/27 将退款状态设置为2，并非支付（支出0）或充值（获取1）
+        userBill.setPm(2);
         return save(userBill);
     }
 

@@ -71,10 +71,10 @@ public class CosServiceImpl implements CosService {
 
     @Override
     public void uploadFile(CloudVo cloudVo, String webPth, String localFile, File file, COSClient cosClient) {
-        logger.info("上传文件开始：" + localFile);
+        logger.info("6.25：上传文件开始：" + localFile);
         try {
             if(!file.exists()){
-                logger.info("上传文件" + localFile + "不存在：");
+                logger.info("6.25：上传文件" + localFile + "不存在：");
                 return;
             }
 
@@ -85,6 +85,7 @@ public class CosServiceImpl implements CosService {
 
                 try{
                     cosClient.createBucket(createBucketRequest);
+                    logger.info("6.25：上传文件");
                 } catch (CosClientException serverException) {
                     serverException.printStackTrace();
                 }
@@ -93,7 +94,7 @@ public class CosServiceImpl implements CosService {
             PutObjectRequest putObjectRequest = new PutObjectRequest(cloudVo.getBucketName(), webPth, file);
             PutObjectResult putObjectResult = cosClient.putObject(putObjectRequest);
 
-            logger.info("上传文件 -- 结束：" + putObjectResult.getETag());
+            logger.info("6.25：上传文件 -- 结束：" + putObjectResult.getETag());
         } catch (Exception e) {
             throw new CrmebException(e.getMessage());
         }

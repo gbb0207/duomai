@@ -123,6 +123,9 @@ public class StoreCouponUserServiceImpl extends ServiceImpl<StoreCouponUserDao, 
             if (userList.containsKey(storeCouponUser.getUid())) {
                 storeCouponUserResponse.setNickname(userList.get(storeCouponUser.getUid()).getNickname());
                 storeCouponUserResponse.setAvatar(userList.get(storeCouponUser.getUid()).getAvatar());
+                // 手机号
+                storeCouponUserResponse.setPhone(userList.get(storeCouponUser.getUid()).getPhone());
+
             }
             storeCouponUserResponseList.add(storeCouponUserResponse);
         }

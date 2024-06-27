@@ -283,6 +283,8 @@ public class UploadServiceImpl implements UploadService {
      */
     @Override
     public FileResultVo fileUpload(MultipartFile multipartFile, String model, Integer pid) throws IOException {
+        logger.info("6.25：文件上传");
+
         String rootPath = (crmebConfig.getImagePath() + "/").replace(" ", "").replace("//", "/");
         UploadUtil.setModelPath(model);
         String modelPath = "public/" + model + "/";

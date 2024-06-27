@@ -8,6 +8,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 /**
@@ -23,7 +24,9 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
  * +----------------------------------------------------------------------
  */
 @EnableAsync //开启异步调用
-@EnableSwagger2
+// TODO: 2024/6/21 后台部署到服务器时此处Swagger异常，改为下列注解
+@EnableWebMvc
+//@EnableSwagger2
 @Configuration
 @EnableTransactionManagement
 @SpringBootApplication(exclude = DataSourceAutoConfiguration.class) //去掉数据源

@@ -48,7 +48,8 @@ public class PayConstants {
     public static final String WX_PAY_SIGN_TYPE_MD5 = "MD5";
     public static final String WX_PAY_SIGN_TYPE_SHA256 = "HMAC-SHA256";
 
-    public static final String PAY_BODY = "Crmeb支付中心-订单支付";
+//    public static final String PAY_BODY = "Crmeb支付中心-订单支付";
+    public static final String PAY_BODY = "支付中心-订单支付";
     public static final String FIELD_SIGN = "sign";
 
     // 公共号退款

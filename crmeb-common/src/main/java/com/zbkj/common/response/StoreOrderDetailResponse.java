@@ -94,6 +94,10 @@ public class StoreOrderDetailResponse implements Serializable {
     @ApiModelProperty(value = "用户姓名")
     private String realName;
 
+    @ApiModelProperty(value = "详细地址")
+    private String userAddress;
+
+
 //    @ApiModelProperty(value = "备注")
 //    private String mark;
 
@@ -108,4 +112,8 @@ public class StoreOrderDetailResponse implements Serializable {
 
     @ApiModelProperty(value = "是否改价,0-否，1-是")
     private Boolean isAlterPrice;
+
+    // 6.27：新增字段
+    @ApiModelProperty(value = "用户电话")
+    private String userPhone;
 }

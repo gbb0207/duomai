@@ -16,7 +16,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@ApiModel(value="OrderExcelVo", description = "产品导出")
+@ApiModel(value = "OrderExcelVo", description = "产品导出")
 public class OrderExcelVo implements Serializable {
 
     @ApiModelProperty(value = "订单号")
@@ -87,4 +87,11 @@ public class OrderExcelVo implements Serializable {
 //
 //    @ApiModelProperty(value = "是否改价,0-否，1-是")
 //    private String isAlterPrice;
+
+    // 6.27：新增字段
+    @ApiModelProperty(value = "用户电话")
+    private String userPhone;
+
+    @ApiModelProperty(value = "详细地址")
+    private String userAddress;
 }

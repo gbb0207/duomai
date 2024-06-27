@@ -212,7 +212,9 @@ public class UserServiceImpl extends ServiceImpl<UserDao, User> implements UserS
             } else {
                 userResponse.setSpreadNickname(userDao.selectById(user.getSpreadUid()).getNickname());
             }
-            userResponse.setPhone(CrmebUtil.maskMobile(userResponse.getPhone()));
+            // 6.24：用户手机号不脱敏
+//            userResponse.setPhone(CrmebUtil.maskMobile(userResponse.getPhone()));
+            userResponse.setPhone(userResponse.getPhone());
             userResponses.add(userResponse);
         }
         return CommonPage.copyPageInfo(pageUser, userResponses);
@@ -1304,6 +1306,7 @@ public class UserServiceImpl extends ServiceImpl<UserDao, User> implements UserS
      */
     @Override
     public List<User> getTopSpreadPeopleListByDate(String type, PageParamRequest pageParamRequest) {
+        logger.info("6.21：推广人排行榜");
         PageHelper.startPage(pageParamRequest.getPage(), pageParamRequest.getLimit());
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.select("count(spread_count) as spread_count, spread_uid")
@@ -1311,10 +1314,12 @@ public class UserServiceImpl extends ServiceImpl<UserDao, User> implements UserS
                 .eq("status", true);
         if (StrUtil.isNotBlank(type)) {
             dateLimitUtilVo dateLimit = DateUtil.getDateLimit(type);
+            logger.info("6.21：开始时间：" + dateLimit.getStartTime() + "，结束时间：" + dateLimit.getEndTime());
             queryWrapper.between("spread_time", dateLimit.getStartTime(), dateLimit.getEndTime());
         }
         queryWrapper.groupBy("spread_uid").orderByDesc("spread_count");
         List<User> spreadVoList = userDao.selectList(queryWrapper);
+        logger.info("6.21：是否查询到推广人：" + spreadVoList.size());
         if (spreadVoList.size() < 1) {
             return null;
         }

@@ -82,6 +82,8 @@ public class StoreCouponUserResponse implements Serializable {
     @ApiModelProperty(value = "用户头像")
     private String avatar;
 
+    private String phone;
+
     @ApiModelProperty(value = "用户头像")
     private Boolean isValid;
 
