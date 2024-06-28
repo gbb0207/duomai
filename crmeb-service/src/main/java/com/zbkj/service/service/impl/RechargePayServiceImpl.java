@@ -123,7 +123,7 @@ public class RechargePayServiceImpl implements RechargePayService {
         System.out.println("6.28 余额虚拟发货:" + jsonObject.toJSONString());
         // 虚拟发货
         String url = StrUtil.format(WeChatConstants.WECHAT_SHIPMENT_API_URL, wechatNewService.getMiniAccessToken());
-        String s = restTemplateUtil.postJsonData(url, new JSONObject());
+        String s = restTemplateUtil.postJsonData(url, jsonObject);
         System.out.println("6.28 余额虚拟发货返回结果:" + s);
         userBill.setMark(StrUtil.format("余额增加了{}元", payPrice));
         userBill.setStatus(1);
