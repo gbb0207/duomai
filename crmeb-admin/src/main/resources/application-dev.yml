@@ -30,13 +30,13 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-#    url: jdbc:mysql://43.138.80.138:3306/db_duomai?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimeZone=GMT+8
-#    username: duomai
-#    password: ZN5SCWdZbXAi7A5t
+    url: jdbc:mysql://43.138.80.138:3306/db_duomai?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimeZone=GMT+8
+    username: duomai
+    password: ZN5SCWdZbXAi7A5t
 #    url: jdbc:mysql://127.0.0.1:3306/duomai?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimeZone=GMT+8
-    url: jdbc:mysql://127.0.0.1:3306/crmeb?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimeZone=GMT+8
-    username: root
-    password: 12345
+#    url: jdbc:mysql://127.0.0.1:3306/crmeb?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimeZone=GMT+8
+#    username: root
+#    password: 12345
   redis:
     host: 127.0.0.1 #地址
     port: 6379 #端口

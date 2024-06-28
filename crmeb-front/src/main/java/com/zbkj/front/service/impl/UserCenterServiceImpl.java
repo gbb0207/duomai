@@ -129,6 +129,9 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
         User user = userService.getInfoException();
         // 昨天得佣金
         BigDecimal yesterdayIncomes = userBrokerageRecordService.getYesterdayIncomes(user.getUid());
+        // 6.28：返回冻结中积分
+        BigDecimal freezePrice = userBrokerageRecordService.getFreezePrice(user.getUid());
+
         //累计已提取佣金
         BigDecimal totalMoney = userExtractService.getExtractTotalMoney(user.getUid());
 
@@ -136,6 +139,7 @@ public class UserCenterServiceImpl extends ServiceImpl<UserDao, User> implements
         userCommissionResponse.setLastDayCount(yesterdayIncomes);
         userCommissionResponse.setExtractCount(totalMoney);
         userCommissionResponse.setCommissionCount(user.getBrokeragePrice());
+        userCommissionResponse.setFreezePrice(freezePrice);
         return userCommissionResponse;
     }
 

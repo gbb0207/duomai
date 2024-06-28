@@ -871,6 +871,7 @@ public class OrderPayServiceImpl implements OrderPayService {
         vo.setTotal_fee(storeOrder.getPayPrice().multiply(BigDecimal.TEN).multiply(BigDecimal.TEN).intValue());
         vo.setSpbill_create_ip(ip);
         vo.setNotify_url(apiDomain + PayConstants.WX_PAY_NOTIFY_API_URI);
+        logger.info("6.28：" + apiDomain + PayConstants.WX_PAY_NOTIFY_API_URI);
 //        vo.setNotify_url("https://appdev.wybcloud.com" + PayConstants.WX_PAY_NOTIFY_API_URI);
         vo.setTrade_type(PayConstants.WX_PAY_TRADE_TYPE_JS);
         vo.setOpenid(openid);
