@@ -23,8 +23,8 @@ server:
 spring:
   profiles:
   #  配置的环境
-    active: dev
-#    active: prod
+#    active: dev
+    active: prod
   servlet:
     multipart:
       max-file-size: 50MB #设置单个文件大小

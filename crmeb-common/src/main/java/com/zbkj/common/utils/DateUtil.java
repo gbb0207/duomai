@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -632,4 +635,14 @@ public final class DateUtil {
         System.out.println(dateLimit.getEndTime());
     }
 
+    public static String nowDateTimeWithTimeZone() {
+        // 获取当前时间并指定时区
+        ZonedDateTime zonedDateTime = ZonedDateTime.now(ZoneId.of("Asia/Shanghai"));
+
+        // 定义日期时间格式化器
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+
+        // 将ZonedDateTime格式化为字符串
+        return zonedDateTime.format(formatter);
+    }
 }

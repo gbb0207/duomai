@@ -103,7 +103,7 @@ public class RechargePayServiceImpl implements RechargePayService {
 
         shipping.put("item_desc", "余额充值-虚拟发货");
         jsonObject.put("shipping_list", shippingList);
-        jsonObject.put("upload_time", DateUtil.nowDateTime("YYYY-MM-DDThh:mm:ss.sss±hh:mm"));
+        jsonObject.put("upload_time", DateUtil.nowDateTimeWithTimeZone());
 
         payer.put("openid", userTokenService.getTokenByUserId(userRecharge.getUid() ,2));
         jsonObject.put("payer", payer);
