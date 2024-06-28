@@ -275,6 +275,10 @@ public class WeChatConstants {
     /** 公众号添加模板（自己的） */
     public static final String WECHAT_MINI_API_ADD_TEMPLATE_URL = "https://api.weixin.qq.com/wxaapi/newtmpl/addtemplate?access_token={}";
 
+    /**
+     * 小程序发货信息录入
+     */
+    public static final String WECHAT_SHIPMENT_API_URL = "https://api.weixin.qq.com/wxa/sec/order/upload_shipping_info?access_token={}";
     /** 小程序accessToken redis key */
     public static final String REDIS_WECAHT_MINI_ACCESS_TOKEN_KEY = "wechat_mini_accessToken";
     /** 公众号accessToken redis key */
