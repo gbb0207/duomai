@@ -82,6 +82,17 @@ public class RechargePayServiceImpl implements RechargePayService {
         userBill.setType(Constants.USER_BILL_TYPE_PAY_RECHARGE);
         userBill.setNumber(payPrice);
         userBill.setBalance(balance);
+
+        Boolean execute = transactionTemplate.execute(e -> {
+            // 订单变动
+            userRechargeService.updateById(userRecharge);
+            // 余额变动
+            userService.operationNowMoney(user.getUid(), payPrice, user.getNowMoney(), "add");
+            // 创建记录
+            userBillService.save(userBill);
+            return Boolean.TRUE;
+        });
+
         // TODO: 微信发货
         JSONObject jsonObject = new JSONObject();
         JSONObject orderKey = new JSONObject();
@@ -91,7 +102,8 @@ public class RechargePayServiceImpl implements RechargePayService {
 
         // 订单单号类型，用于确认需要上传详情的订单。枚举值1，使用下单商户号和商户侧单号；枚举值2，使用微信支付单号。
         orderKey.put("order_number_type", 1);
-        orderKey.put("mchid", systemConfigService.getValueByKeyException(Constants.CONFIG_KEY_PAY_ROUTINE_MCH_ID));
+//        orderKey.put("mchid", systemConfigService.getValueByKeyException(Constants.CONFIG_KEY_PAY_ROUTINE_MCH_ID));
+        orderKey.put("mchid", "1678374245");
         // 商户系统内部订单号，只能是数字、大小写字母`_-*`且在同一个商户号下唯一
         orderKey.put("out_trade_no", userRecharge.getOrderId());
 
@@ -117,15 +129,6 @@ public class RechargePayServiceImpl implements RechargePayService {
         userBill.setStatus(1);
         userBill.setCreateTime(DateUtil.nowDateTime());
 
-        Boolean execute = transactionTemplate.execute(e -> {
-            // 订单变动
-            userRechargeService.updateById(userRecharge);
-            // 余额变动
-            userService.operationNowMoney(user.getUid(), payPrice, user.getNowMoney(), "add");
-            // 创建记录
-            userBillService.save(userBill);
-            return Boolean.TRUE;
-        });
         return execute;
     }
 }
