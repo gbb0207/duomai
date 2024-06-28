@@ -102,6 +102,7 @@ public class RechargePayServiceImpl implements RechargePayService {
         jsonObject.put("delivery_mode", "1");
 
         shipping.put("item_desc", "余额充值-虚拟发货");
+        shippingList.add(shipping);
         jsonObject.put("shipping_list", shippingList);
         jsonObject.put("upload_time", DateUtil.nowDateTimeWithTimeZone());
 
