@@ -1561,9 +1561,9 @@ public class StoreOrderServiceImpl extends ServiceImpl<StoreOrderDao, StoreOrder
         String url = StrUtil.format(WeChatConstants.WECHAT_SHIPMENT_API_URL, accessToken);
         JSONObject body = new JSONObject();
         JSONObject orderKey = new JSONObject();
-        orderKey.put("order_number_type", "1");
+        orderKey.put("order_number_type", 1);
         orderKey.put("mchid", systemConfigService.getValueByKeyException(Constants.CONFIG_KEY_PAY_ROUTINE_MCH_ID));
-        orderKey.put("out_trade_no", storeOrder.getOrderId());
+        orderKey.put("out_trade_no", storeOrder.getOutTradeNo());
         JSONObject payer = new JSONObject();
         payer.put("openid", userTokenService.getTokenByUserId(storeOrder.getUid(), 2).getToken());
         ArrayList<Object> shippingList = new ArrayList<>();
@@ -1577,8 +1577,8 @@ public class StoreOrderServiceImpl extends ServiceImpl<StoreOrderDao, StoreOrder
         shipping.put("contact", contact);
         shippingList.add(shipping);
         body.put("order_key", orderKey);
-        body.put("logistics_type", "1");
-        body.put("delivery_mode", "1");
+        body.put("logistics_type", 1);
+        body.put("delivery_mode", 1);
         body.put("shipping_list", shippingList);
         body.put("upload_time", DateUtil.nowDateTimeWithTimeZone());
         body.put("payer", payer);

@@ -90,17 +90,16 @@ public class RechargePayServiceImpl implements RechargePayService {
         List<JSONObject> shippingList = new ArrayList<>();
 
         // 订单单号类型，用于确认需要上传详情的订单。枚举值1，使用下单商户号和商户侧单号；枚举值2，使用微信支付单号。
-        orderKey.put("order_number_type", "1");
-        orderKey.put("mchid", systemConfigService.getValueByKeyException(Constants.CONFIG_KEY_PAY_WE_CHAT_MCH_ID));
-        orderKey.put("mchid", "1678374245");
+        orderKey.put("order_number_type", 1);
+        orderKey.put("mchid", systemConfigService.getValueByKeyException(Constants.CONFIG_KEY_PAY_ROUTINE_MCH_ID));
         // 商户系统内部订单号，只能是数字、大小写字母`_-*`且在同一个商户号下唯一
         orderKey.put("out_trade_no", userRecharge.getOrderId());
 
         jsonObject.put("order_key", orderKey);
         // 1、实体物流配送采用快递公司进行实体物流配送形式 2、同城配送 3、虚拟商品，虚拟商品，例如话费充值，点卡等，无实体配送形式 4、用户自提
-        jsonObject.put("logistics_type", "3");
+        jsonObject.put("logistics_type", 3);
         // 发货模式，发货模式枚举值：1、UNIFIED_DELIVERY（统一发货）2、SPLIT_DELIVERY（分拆发货） 示例值: UNIFIED_DELIVERY
-        jsonObject.put("delivery_mode", "1");
+        jsonObject.put("delivery_mode", 1);
 
         shipping.put("item_desc", "朵买商城-余额充值");
         shippingList.add(shipping);
