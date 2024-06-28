@@ -37,4 +37,7 @@ public class UserCommissionResponse implements Serializable {
 
     @ApiModelProperty(value = "当前佣金")
     private BigDecimal commissionCount = BigDecimal.ZERO;
+
+    @ApiModelProperty(value = "冻结中佣金")
+    private BigDecimal freezePrice = BigDecimal.ZERO;
 }

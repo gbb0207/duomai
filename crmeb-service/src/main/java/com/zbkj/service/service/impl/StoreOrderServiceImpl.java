@@ -3,6 +3,7 @@ package com.zbkj.service.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -14,6 +15,7 @@ import com.github.pagehelper.PageInfo;
 import com.zbkj.common.constants.Constants;
 import com.zbkj.common.constants.NotifyConstants;
 import com.zbkj.common.constants.UserConstants;
+import com.zbkj.common.constants.WeChatConstants;
 import com.zbkj.common.exception.CrmebException;
 import com.zbkj.common.model.combination.StorePink;
 import com.zbkj.common.model.express.Express;
@@ -25,12 +27,11 @@ import com.zbkj.common.model.system.SystemStore;
 import com.zbkj.common.model.user.User;
 import com.zbkj.common.model.user.UserBrokerageRecord;
 import com.zbkj.common.model.user.UserToken;
+import com.zbkj.common.model.wechat.WechatExceptions;
 import com.zbkj.common.page.CommonPage;
 import com.zbkj.common.request.*;
 import com.zbkj.common.response.*;
-import com.zbkj.common.utils.DateUtil;
-import com.zbkj.common.utils.RedisUtil;
-import com.zbkj.common.utils.ValidateFormUtil;
+import com.zbkj.common.utils.*;
 import com.zbkj.common.vo.*;
 import com.zbkj.service.dao.StoreOrderDao;
 import com.zbkj.service.delete.OrderUtils;
@@ -43,10 +44,12 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+import springfox.documentation.spring.web.json.Json;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -133,6 +136,12 @@ public class StoreOrderServiceImpl extends ServiceImpl<StoreOrderDao, StoreOrder
 
     @Autowired
     private SmsTemplateService smsTemplateService;
+
+    @Autowired
+    private RestTemplateUtil restTemplateUtil;
+
+    @Autowired
+    private WechatExceptionsService wechatExceptionsService;
 
     /**
      * 列表
@@ -1546,6 +1555,36 @@ public class StoreOrderServiceImpl extends ServiceImpl<StoreOrderDao, StoreOrder
 
         if (!execute) throw new CrmebException("快递发货失败！");
 
+        // TODO: 2024/6/28 订单发货-小程序发货
+        logger.info("6.28：订单发货-小程序发货");
+        String accessToken = getMiniAccessToken();
+        String url = StrUtil.format(WeChatConstants.WECHAT_SHIPMENT_API_URL, accessToken);
+        JSONObject body = new JSONObject();
+        JSONObject orderKey = new JSONObject();
+        orderKey.put("order_number_type", "1");
+        orderKey.put("mchid", systemConfigService.getValueByKeyException(Constants.CONFIG_KEY_PAY_ROUTINE_MCH_ID));
+        orderKey.put("out_trade_no", storeOrder.getId());
+        JSONObject payer = new JSONObject();
+        payer.put("openid", userTokenService.getTokenByUserId(storeOrder.getUid(), 2));
+        ArrayList<Object> shippingList = new ArrayList<>();
+        JSONObject shipping = new JSONObject();
+        shipping.put("tracking_no", storeOrder.getDeliveryId());
+        shipping.put("express_company", storeOrder.getDeliveryCode());
+        shipping.put("item_desc", storeOrderInfoService.getProductNameByOrderNo(storeOrder.getOrderId()));
+        JSONObject contact = new JSONObject();
+        contact.put("consignor_contact", CrmebUtil.maskMobile(request.getToTel()));
+        contact.put("receiver_contact", CrmebUtil.maskMobile(storeOrder.getUserPhone()));
+        shipping.put("contact", contact);
+        shippingList.add(shipping);
+        body.put("order_key", orderKey);
+        body.put("logistics_type", "1");
+        body.put("delivery_mode", "1");
+        body.put("shipping_list", shippingList);
+        body.put("upload_time", DateUtil.nowDateTime("YYYY-MM-DDThh:mm:ss.sss±hh:mm"));
+        body.put("payer", payer);
+        String result = restTemplateUtil.postJsonData(url, body);
+        JSONObject jsonObject = JSONObject.parseObject(result);
+        logger.info("6.28：返回消息：" + jsonObject);
         sendGoodsNotify(storeOrder);
     }
 
@@ -2179,5 +2218,68 @@ public class StoreOrderServiceImpl extends ServiceImpl<StoreOrderDao, StoreOrder
         }
     }
 
+    /**
+     * 微信异常处理
+     * @param jsonObject 微信返回数据
+     * @param remark 备注
+     */
+    private void wxExceptionDispose(JSONObject jsonObject, String remark) {
+        WechatExceptions wechatExceptions = new WechatExceptions();
+        wechatExceptions.setErrcode(jsonObject.getString("errcode"));
+        wechatExceptions.setErrmsg(StrUtil.isNotBlank(jsonObject.getString("errmsg")) ? jsonObject.getString("errmsg") : "");
+        wechatExceptions.setData(jsonObject.toJSONString());
+        wechatExceptions.setRemark(remark);
+        wechatExceptions.setCreateTime(cn.hutool.core.date.DateUtil.date());
+        wechatExceptions.setUpdateTime(cn.hutool.core.date.DateUtil.date());
+        wechatExceptionsService.save(wechatExceptions);
+    }
+
+    /**
+     * 获取微信accessToken
+     * @param appId appId
+     * @param secret secret
+     * @param type mini-小程序，public-公众号，app-app
+     * @return WeChatAccessTokenVo
+     */
+    private WeChatAccessTokenVo getAccessToken(String appId, String secret, String type) {
+        String url = StrUtil.format(WeChatConstants.WECHAT_ACCESS_TOKEN_URL, appId, secret);
+        JSONObject data = restTemplateUtil.getData(url);
+        if (ObjectUtil.isNull(data)) {
+            throw new CrmebException("微信平台接口异常，没任何数据返回！");
+        }
+        if (data.containsKey("errcode") && !"0".equals(data.getString("errcode"))) {
+            if (data.containsKey("errmsg")) {
+                // 保存到微信异常表
+                wxExceptionDispose(data, StrUtil.format("微信获取accessToken异常，{}端", type));
+                throw new CrmebException("微信接口调用失败：" + data.getString("errcode") + data.getString("errmsg"));
+            }
+        }
+        return JSONObject.parseObject(data.toJSONString(), WeChatAccessTokenVo.class);
+    }
+
+    /**
+     * 获取小程序accessToken
+     * @return accessToken
+     */
+    public String getMiniAccessToken() {
+        boolean exists = redisUtil.exists(WeChatConstants.REDIS_WECAHT_MINI_ACCESS_TOKEN_KEY);
+        if (exists) {
+            Object accessToken = redisUtil.get(WeChatConstants.REDIS_WECAHT_MINI_ACCESS_TOKEN_KEY);
+            return accessToken.toString();
+        }
+        String appId = systemConfigService.getValueByKey(WeChatConstants.WECHAT_MINI_APPID);
+        if (StrUtil.isBlank(appId)) {
+            throw new CrmebException("微信小程序appId未设置");
+        }
+        String secret = systemConfigService.getValueByKey(WeChatConstants.WECHAT_MINI_APPSECRET);
+        if (StrUtil.isBlank(secret)) {
+            throw new CrmebException("微信小程序secret未设置");
+        }
+        WeChatAccessTokenVo accessTokenVo = getAccessToken(appId, secret, "mini");
+        // 缓存accessToken
+        redisUtil.set(WeChatConstants.REDIS_WECAHT_MINI_ACCESS_TOKEN_KEY, accessTokenVo.getAccessToken(),
+                accessTokenVo.getExpiresIn().longValue() - 1800L, TimeUnit.SECONDS);
+        return accessTokenVo.getAccessToken();
+    }
 }
 
